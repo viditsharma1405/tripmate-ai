@@ -47,30 +47,31 @@ The frontend features a sleek **obsidian & radiant warm orange (`#FF8C55`)** min
 
 ```mermaid
 flowchart TD
-    User([User Request]) --> Guardrail{Input Guardrail}
-    
-    Guardrail -- Blocked --> BlockedNode[Security Alert / Polite Rejection] --> END([End])
-    Guardrail -- Passed --> Supervisor[Supervisor Agent]
-    
-    Supervisor -->|Plan & Dispatch| Specialists
-    
-    subgraph Specialists [Specialized Agents via MCP]
-        FA[Flight Agent<br/>AviationStack MCP]
-        HA[Hotel Agent<br/>Tavily Search MCP]
-        WA[Weather Agent<br/>OpenWeather MCP]
-        BA[Budget Agent<br/>Cost Feasibility Engine]
+    subgraph Pipeline [TripMate AI Multi-Agent Architecture]
+        User["User Travel Request"] --> Guardrail{"Input Guardrail Check"}
+        
+        Guardrail -->|Blocked| BlockedNode["Security Alert / Request Rejected"]
+        BlockedNode --> TerminateNode["Pipeline Terminated"]
+        
+        Guardrail -->|Passed| Supervisor["Supervisor Agent (Groq LLM)"]
+        
+        Supervisor --> FA["01 Flight Agent (AviationStack MCP)"]
+        Supervisor --> HA["02 Hotel Agent (Tavily Search MCP)"]
+        Supervisor --> WA["03 Weather Agent (OpenWeather MCP)"]
+        Supervisor --> BA["04 Budget Agent (Cost Engine)"]
+        
+        FA --> IA["05 Itinerary Agent (Draft Synthesis)"]
+        HA --> IA
+        WA --> IA
+        BA --> IA
+        
+        IA --> Checkpoint["HITL Checkpoint (PostgresSaver)"]
+        Checkpoint --> Review{"Human Review"}
+        
+        Review -->|Revision Requested| Supervisor
+        Review -->|Approved| FinalAgent["Final Polish Agent"]
+        FinalAgent --> Finished["Final Polished Itinerary"]
     end
-    
-    Specialists --> IA[Itinerary Agent<br/>Draft Plan Composition]
-    
-    IA --> Checkpoint[HITL Checkpoint<br/>LangGraph PostgresSaver]
-    
-    Checkpoint --> UserReview{Human Review}
-    
-    UserReview -- "Revision Feedback" --> Supervisor
-    UserReview -- "Approved" --> FinalAgent[Final Polish Agent]
-    
-    FinalAgent --> Output([Final Travel Itinerary])
 ```
 
 ---
